@@ -4,6 +4,12 @@ main() {
   runApp(const QuoteApp());
 }
 
+class Quote {
+  late final String text;
+  late final String author;
+  Quote(this.text, this.author);
+}
+
 class QuoteApp extends StatelessWidget {
   const QuoteApp({super.key});
 
@@ -11,36 +17,87 @@ class QuoteApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       title: "Hello ",
-      home: HomePage(),
+      home: StatefulHomePage(),
     );
   }
 }
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class StatefulHomePage extends StatefulWidget {
+  const StatefulHomePage({super.key});
+
+  @override
+  State<StatefulHomePage> createState() => _StatefulHomePageState();
+}
+
+class _StatefulHomePageState extends State<StatefulHomePage> {
+  final _formkey = GlobalKey<FormState>();
+  late String _inputQuote;
+  late String _inputAuthor;
+  late List<Quote> quotes = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Quote'),
-      ),
-      body: ListView(
-        children: const [
-          QuoteCard("11111", "bank", "https://cdn.pixabay.com/photo/2022/02/22/06/21/cat-7028109_960_720.png"),
-          QuoteCard("22222", "bob", "https://cdn.pixabay.com/photo/2017/11/11/17/40/cat-2939726_960_720.jpg"),
-          QuoteCard("3333", "boy", "https://cdn.pixabay.com/photo/2019/05/21/07/11/cat-4218424_960_720.jpg"),
-        ],
-      ),
-    );
+        appBar: AppBar(
+          title: const Text('Quote'),
+        ),
+        body: Column(
+          children: [
+            Form(
+                key: _formkey,
+                child: Column(
+              children: [
+                TextFormField(
+                  decoration: const InputDecoration(label: Text('Quote')),
+                  onSaved: (String? value) {
+                    _inputQuote = value ?? '';
+                  },
+                ),
+                TextFormField(
+                  decoration: const InputDecoration(label: Text('Author')),
+                  onSaved: (String? value) {
+                    _inputAuthor = value ?? '';
+                  },
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    _formkey.currentState?.save();
+                    print(_inputQuote);
+                    print(_inputAuthor);
+                    setState(() {
+                      quotes.insert(0, Quote(_inputQuote, _inputAuthor));
+                    });
+                    
+                    _formkey.currentState?.reset();
+                  },
+                  child: Text('Submit'))
+              ],
+            )),
+            Expanded(
+              child: quotes.isEmpty
+                  ? const Center(
+                      child: Text('empty'),
+                    )
+                  : ListView.builder(
+                      itemCount: quotes.length,
+                      itemBuilder: ((context, index) {
+                        return QuoteCard(
+                            quotes[index].text, quotes[index].author);
+                      }),
+                    ),
+            ),
+          ],
+        ));
   }
 }
 
 class QuoteCard extends StatelessWidget {
   final String _text;
   final String _author;
-  final String _imgURL;
-  const QuoteCard(this._text, this._author, this._imgURL, {
+
+  const QuoteCard(
+    this._text,
+    this._author, {
     Key? key,
   }) : super(key: key);
 
@@ -50,35 +107,22 @@ class QuoteCard extends StatelessWidget {
       margin: const EdgeInsets.all(8),
       child: Column(
         children: <Widget>[
-          Container(
-            height: 300,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              image: DecorationImage(
-                fit: BoxFit.cover,
-                image: NetworkImage('$_imgURL')
-                )
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
               '"$_text"',
               style: const TextStyle(
                 fontSize: 20,
-                
-              ),),
+              ),
+            ),
           ),
-            
           Container(
             alignment: const Alignment(1, 0),
             padding: const EdgeInsets.all(8.0),
             child: Text(
               '$_author',
-              style: const TextStyle(
-                fontStyle: FontStyle.italic
-              ),
-              ),
+              style: const TextStyle(fontStyle: FontStyle.italic),
+            ),
           ),
         ],
       ),
